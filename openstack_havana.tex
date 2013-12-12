@@ -4,6 +4,7 @@
 \usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
 \usepackage{graphicx}
 %\usepackage{fancybox}
+\usepackage{float}
 \usepackage{hyperref}
 \usepackage{pdflscape}
 \usepackage{multicol}
@@ -500,7 +501,7 @@ packstack --answer-file=packstack-${DATE}
 \textbf{Note:} Monitor the progress in detail via /var/tmp/packstack/
 
 \section{Neutron Networking}
-\begin{figure}[ht]
+\begin{figure}[H]
 	\caption{OpenStack Node Details}
 	\centering
 	\label{fig:openstack_neutron_gre}
@@ -606,6 +607,10 @@ neutron subnet-create admin_network 192.168.10.0/24 --name admin_subnet
 \begin{lstlisting}[caption={Set the router gateway},language=bash]
 neutron router-gateway-set admin_router public_network
 \end{lstlisting}
+
+
+
+
 \subsection{Troubleshooting}
 This section is devoted to resolving issues that I encountered while installing and configuring OpenStack.
 \subsubsection{Issue deleting floating IP port}
@@ -636,6 +641,53 @@ select * from floatingips;
 +--------------------------------------+
 delete from floatingips where id = 'f5af35d0-7a4c-459c-85dc-9f6af9fb1b6c'
 \end{lstlisting}
+
+\section{OpenDaylight}
+I just started to test with OpenDaylight controller.  I am fairly certain that I set this up incorrectly.  The only positive is a web-based UI for viewing Open vSwitch / OpenStack networking.
+
+\begin{figure}[H]
+	\caption{OpenDaylight Controller UI}
+	\centering
+	\label{fig:opendaylight_ctrl_ui}
+	\includegraphics[scale=0.25]{./pictures/OpenDaylightController.png}
+\end{figure}
+
+%https://wiki.opendaylight.org/view/OpenDaylight_Controller:Installation
+
+\subsection{Install Controller}
+I built a new Fedora 19 x64 virtual machine for the OpenDaylight controller.   
+
+
+\begin{lstlisting}[caption={Install Oracle Java JDK},language=bash]
+sudo yum install jdk-7u45-linux-x64.rpm
+\end{lstlisting}
+\begin{lstlisting}[caption={Disable firewalld},language=bash]
+systemctl stop firewalld
+systemctl disable firewalld
+\end{lstlisting}
+\begin{lstlisting}[caption={Get the latest controller},language=bash]
+wget https://jenkins.opendaylight.org/controller/job/controller-merge/lastSuccessfulBuild/artifact/opendaylight/distribution/opendaylight/target/distribution.opendaylight-osgipackage.zip
+unzip distribution.opendaylight-osgipackage.zip
+\end{lstlisting}
+\begin{lstlisting}[caption={Start the controller},language=bash]
+cd opendaylight
+./run.sh
+\end{lstlisting}
+
+\subsection{Configure Open vSwitch}
+
+\begin{lstlisting}[caption={Neutron node set controller and manager},language=bash]
+ovs-vsctl set-controller br-tun tcp:10.53.251.200
+ovs-vsctl set-controller br-ex tcp:10.53.251.200
+ovs-vsctl set-controller br-int tcp:10.53.251.200
+ovs-vsctl set-manager tcp:10.53.251.200
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Nova node set controller},language=bash]
+ovs-vsctl set-controller br-tun tcp:10.53.251.200
+ovs-vsctl set-controller br-int tcp:10.53.251.200
+\end{lstlisting}
+
 
 \chapter{Instances}
 \section{Security Group Configuration}
