@@ -56,7 +56,7 @@ breakatwhitespace=false
     \bfseries Acknowledgements\end{center}}%
     {\vfill\null}
         \begin{acknowledgements}
-        I have read many articles from various sources I am sure I have missed to source them some along the way.  
+        I have read many articles from various sources I am sure I have missed to source them some along the way.  Maybe I should add a bib? 
         \end{acknowledgements}
 \tableofcontents
 \listoffigures
@@ -641,6 +641,44 @@ select * from floatingips;
 +--------------------------------------+
 delete from floatingips where id = 'f5af35d0-7a4c-459c-85dc-9f6af9fb1b6c'
 \end{lstlisting}
+
+\section{ML2 plugin}
+
+%http://openstack.redhat.com/Modular_Layer_2_(ML2)_Plugin
+%https://github.com/CiscoSystems/neutron/blob/odl_ml2/etc/neutron/plugins/ml2/ml2_conf_odl.ini
+
+\begin{lstlisting}[caption={Install Oracle Java JDK},language=bash]
+
+NEUTRON_SERVICES=‘systemctl --all --full --no-page -t service | grep neutron | awk ’{print $1}’‘
+for SERVICE in $NEUTRON_SERVICES; do systemctl stop $SERVICE; done
+
+
+lrwxrwxrwx    1 root root      55 Dec  5 13:17 plugin.ini -> /etc/neutron/plugins/openvswitch/ovs_neutron_plugin.ini
+
+cd /usr/lib/python2.7/site-packages/neutron/plugins/ml2/drivers
+wget https://raw.github.com/CiscoSystems/neutron/odl_ml2/neutron/plugins/ml2/drivers/mechanism_odl.py
+
+
+crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2 mechanism_drivers opendaylight,logger
+crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2 tenant_network_types gre,vxlan
+crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini database sql_connection mysql://neutron:a5ae99f4d7304966@10.53.253.90/neutron_ml2
+crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini securitygroup firewall_driver dummy_value_to_enable_security_groups_in_server
+
+crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2_odl url http://10.53.251.200:8080/controller/nb/v2/neutron
+crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2_odl username admin
+crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2_odl password admin
+crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2_odl timeout 30
+
+yum install python-stevedore
+
+neutron-db-manage --config-file /usr/share/neutron/neutron-dist.conf --config-file /etc/neutron/neutron.conf --config-file /etc/neutron/plugin.ini upgrade head
+
+
+\end{lstlisting}
+
+
+
+
 
 \section{OpenDaylight}
 I just started to test with OpenDaylight controller.  I am fairly certain that I set this up incorrectly.  The only positive is a web-based UI for viewing Open vSwitch / OpenStack networking.
